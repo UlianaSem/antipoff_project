@@ -2,7 +2,7 @@ from django.db.models import Model, DecimalField, CharField, ForeignKey, Boolean
 
 
 class Request(Model):
-    cadastral_number = CharField(max_length=15, verbose_name='кадастровый номер')
+    cadastral_number = CharField(max_length=18, verbose_name='кадастровый номер')
     latitude = DecimalField(max_digits=6, decimal_places=2, verbose_name='широта')
     longitude = DecimalField(max_digits=6, decimal_places=2, verbose_name='долгота')
 

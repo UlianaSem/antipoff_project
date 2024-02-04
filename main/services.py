@@ -1,7 +1,7 @@
 import random
 import time
 
-from main.models import Answer, Request
+from main.models import Answer
 
 
 def emulate_sending(request):

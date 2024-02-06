@@ -1,4 +1,4 @@
-import threading
+import socket
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
 from rest_framework import status, serializers
@@ -21,8 +21,7 @@ class RequestAPIView(CreateAPIView):
 
     def perform_create(self, serializer):
         request = serializer.save()
-        thread = threading.Thread(target=emulate_sending, args=[request], name='emulate')
-        thread.start()
+        emulate_sending(request=request)
 
 
 @extend_schema(
@@ -34,7 +33,7 @@ class RequestAPIView(CreateAPIView):
             description='id запроса',
             required=True,
             type=int)
-        ],
+    ],
 )
 class AnswerAPIView(RetrieveAPIView):
     queryset = Request.objects.all()
@@ -60,21 +59,27 @@ class HistoryAPIView(ListAPIView):
 
 
 @extend_schema(
-        summary="Проверить доступность сервера",
-        responses={
-            status.HTTP_200_OK: inline_serializer(
-                name='PingResponse',
-                fields={
-                    'message': serializers.CharField(),
-                }
-            )
-        },
+    summary="Проверить доступность сервера",
+    responses={
+        status.HTTP_200_OK: inline_serializer(
+            name='PingResponse',
+            fields={
+                'message': serializers.CharField(),
+            }
+        )
+    },
 )
 @api_view(http_method_names=['GET'])
 def get_ping(request):
-    threads = [thread.name for thread in threading.enumerate()]
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    if 'emulate' in threads:
+    try:
+        s.connect(('0.0.0.0', '80'))
+        s.shutdown(socket.SHUT_RDWR)
+        return Response(status=status.HTTP_200_OK, data={"message": "server is available"})
+
+    except:
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, data={"message": "server is not available"})
 
-    return Response(status=status.HTTP_200_OK, data={"message": "server is available"})
+    finally:
+        s.close()
